@@ -11,6 +11,10 @@ const UserSchema = mongoose.Schema({
         trim: true,
         required: true
     },
+    refreshTokenCounter: {
+        type: Number,
+        default: 0
+    },
     password: {
         type: String
     }

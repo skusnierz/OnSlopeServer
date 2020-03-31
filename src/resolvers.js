@@ -1,20 +1,31 @@
 import { User } from './models/user';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken'
+import { createToken } from './services/tokenService';
 
 export const resolvers = {
     Query: {
         hello: () => "hi",
-        users: () => User.find()
+        users: (_, __, { req }) => {
+            if (!req.userId) {
+                throw Error("You dont have access!!")
+            }
+            return User.find()
+        },
+        user: (_, __, { req }) => {
+            if (!req.userId) {
+                throw Error("You dont have access!!")
+            }
+            return User.findOne({ '_id': req.userId })
+        },
     },
     Mutation: {
         register: async(_, { username, email, password }) => {
             const user = new User({ username, email, password });
-            user.password = await bcrypt.hash(user.password, 20)
+            user.password = await bcrypt.hash(user.password, 12)
             await user.save();
             return user;
         },
-        login: async(_, { email, password }) => {
+        login: async(_, { email, password }, { res }) => {
             const user = await User.findOne({ 'email': email });
             if (!user) {
                 throw new Error('User with passed email not exist!')
@@ -25,9 +36,19 @@ export const resolvers = {
                 throw new Error('Invalid password !')
             }
 
-            const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
-
-            return token
+            const { accessToken, refreshToken } = createToken(user)
+            res.cookie('accessToken', accessToken);
+            res.cookie('refreshToken', refreshToken);
+            return user
+        },
+        invalidateTokens: async(_, __, { req }) => {
+            if (!req.userId) {
+                return false;
+            }
+            const user = await User.findOne({ '_id': req.userId });
+            user.refreshTokenCounter += 1;
+            await user.save();
+            return true;
         }
     }
 };
