@@ -1,5 +1,5 @@
-import { User } from './models/user';
 import bcrypt from 'bcrypt';
+import { User } from './models/user';
 import { createToken } from './services/tokenService';
 
 export const resolvers = {
