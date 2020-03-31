@@ -1,5 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env' });
+console.log(process.env.JWT_SECRET);
+
 import { ApolloServer, gql } from "apollo-server-express";
 import express from "express"
+import { resolvers } from "./resolvers";
+import { typeDefs } from "./typeDefs";
 
 import dbConfig from './config/database';
 import mongoose from 'mongoose';
@@ -12,30 +18,18 @@ mongoose.connection.on('error', (err) => {
     process.exit();
 });
 
+const runServer = async() => {
+    const app = express();
 
-const Cat = mongoose.model('Cat', { name: String });
+    const server = new ApolloServer({
+        typeDefs,
+        resolvers
+    });
+    server.applyMiddleware({ app });
 
-const app = express();
+    app.listen({ port: 4000 }, () =>
+        console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
+    );
+};
 
-const typeDefs = gql `
-    type Query {
-        hello: String!
-    }
-`;
-
-const resolvers = {
-    Query: {
-        hello: () => "hello"
-    }
-}
-
-const server = new ApolloServer({
-    typeDefs,
-    resolvers
-});
-
-server.applyMiddleware({ app });
-
-app.listen({ port: 4000 }, () =>
-    console.log('server is ready')
-);
+runServer();
