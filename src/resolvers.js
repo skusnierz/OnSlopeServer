@@ -7,13 +7,14 @@ export const resolvers = {
         hello: () => "hi",
         users: (_, __, { req }) => {
             if (!req.userId) {
-                throw Error("You dont have access!!")
+                throw Error("You don't have access!!")
             }
             return User.find()
         },
         user: (_, __, { req }) => {
+            console.log(req);
             if (!req.userId) {
-                throw Error("You dont have access!!")
+                throw Error("You don't have access!!")
             }
             return User.findOne({ '_id': req.userId })
         },
@@ -41,12 +42,14 @@ export const resolvers = {
             res.cookie('refreshToken', refreshToken);
             return user
         },
-        invalidateTokens: async(_, __, { req }) => {
+        logout: async(_, __, { req, res }) => {
+
             if (!req.userId) {
                 return false;
             }
             const user = await User.findOne({ '_id': req.userId });
             user.refreshTokenCounter += 1;
+            res.clearCookie('accessToken');
             await user.save();
             return true;
         }
