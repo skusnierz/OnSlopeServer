@@ -7,6 +7,7 @@ import dbConfig from './config/database';
 import auth from './middlewares/auth';
 import { resolvers } from "./resolvers";
 import { typeDefs } from "./typeDefs";
+import cors from 'cors';
 dotenv.config({ path: '.env' });
 
 
@@ -26,11 +27,18 @@ const runServer = async() => {
     });
 
     const app = express();
-
+    app.use(cors({
+        origin: true,
+        credentials: true,
+    }));
     app.use(cookieParser());
     app.use(auth.authMiddleware);
 
-    server.applyMiddleware({ app });
+    server.applyMiddleware({
+        app,
+        path: '/',
+        cors: false,
+    });
 
     app.listen({ port: 4000 }, () =>
         console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
